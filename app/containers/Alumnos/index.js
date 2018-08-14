@@ -20,6 +20,9 @@ import FlatButton from 'material-ui/FlatButton';
 import RaisedButton from 'material-ui/RaisedButton';
 import TextField from 'material-ui/TextField';
 import { createStructuredSelector } from 'reselect';
+import FlechitaAbajoIcon from 'material-ui/svg-icons/navigation/arrow-downward';
+import FlechitaArribaIcon from 'material-ui/svg-icons/navigation/arrow-upward';
+import NeutroIcon from 'material-ui/svg-icons/action/compare-arrows';
 import makeSelectAlumnos from './selectors';
 
 export class Alumnos extends React.Component { // eslint-disable-line react/prefer-stateless-function
@@ -51,6 +54,8 @@ export class Alumnos extends React.Component { // eslint-disable-line react/pref
     semestre: -1,
     carrera: '',
     selectedStudentIndex: -1,
+    selectedFilter: '',
+    order: 'down',
   };
 
   handleOpen = () => {
@@ -123,8 +128,32 @@ export class Alumnos extends React.Component { // eslint-disable-line react/pref
   }
 
   render() {
-    const { alumnos } = this.state;
+    const { alumnos, selectedFilter, order } = this.state;
+    const alumnosOrdered = alumnos.sort((a, b) => {
+      switch (selectedFilter) {
+        case 'nombre':
+          if (order === 'up') {
+            return a.nombre < b.nombre;
+          }
+          return a.nombre > b.nombre;
+        case 'numControl':
+          if (order === 'up') {
+            return a.numControl < b.numControl;
+          }
+          return a.numControl > b.numControl;
+        case 'semestre':
+          if (order === 'up') {
+            return a.semestre < b.semestre;
+          }
+          return a.semestre > b.semestre;
+        default:
+          return a.semestre < b.semestre;
+      }
+    });
     // ACCIONES DEL DIÁLOGO DE CREAR
+    const cursor = {
+      cursor: 'pointer',
+    };
     const actions = [
       <FlatButton
         label="Cancelar"
@@ -152,20 +181,67 @@ export class Alumnos extends React.Component { // eslint-disable-line react/pref
       />,
     ];
     // TABLA DE ALUMNOS
+    const flechita = order === 'down' ?
+      (<FlechitaAbajoIcon
+        style={cursor}
+        onClick={() => this.setState({ order: 'up' })}
+      />)
+      :
+      (<FlechitaArribaIcon
+        style={cursor}
+        onClick={() => this.setState({ order: 'down' })}
+      />);
+
     const TableExampleSimple = () => (
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHeaderColumn>Nombre</TableHeaderColumn>
-            <TableHeaderColumn>Número de control</TableHeaderColumn>
-            <TableHeaderColumn>Semestre</TableHeaderColumn>
-            <TableHeaderColumn>Carrera</TableHeaderColumn>
+            <TableHeaderColumn>
+              Nombre
+              {
+                selectedFilter === 'nombre' ?
+                  flechita
+                  :
+                  <NeutroIcon
+                    style={cursor}
+                    onClick={() => this.setState({ selectedFilter: 'nombre' })}
+                  />
+              }
+            </TableHeaderColumn>
+            <TableHeaderColumn>
+              Número de control
+              {
+                selectedFilter === 'numControl' ?
+                  flechita
+                  :
+                  <NeutroIcon
+                    style={cursor}
+                    onClick={() => this.setState({ selectedFilter: 'numControl' })}
+                  />
+              }
+            </TableHeaderColumn>
+            <TableHeaderColumn>
+              Semestre
+              {
+                selectedFilter === 'semestre' ?
+                  flechita
+                  :
+                  <NeutroIcon
+                    style={cursor}
+                    onClick={() => this.setState({ selectedFilter: 'semestre' })}
+                  />
+              }
+            </TableHeaderColumn>
+            <TableHeaderColumn>
+              Carrera
+              <FlechitaAbajoIcon />
+            </TableHeaderColumn>
             <TableHeaderColumn></TableHeaderColumn>
           </TableRow>
         </TableHeader>
         <TableBody>
           {
-            alumnos.map((item, index) => (
+            alumnosOrdered.map((item, index) => (
               <TableRow key={index}>
                 <TableRowColumn>{item.nombre}</TableRowColumn>
                 <TableRowColumn>{item.numControl}</TableRowColumn>
@@ -178,12 +254,12 @@ export class Alumnos extends React.Component { // eslint-disable-line react/pref
                     style={style}
                     onClick={() => this.handleDeleteStudent(index)}
                   />
-                <RaisedButton
-                  label="Editar"
-                  secondary
-                  style={style}
-                  onClick={() => this.handleOpenUpdate(index)}
-                />
+                  <RaisedButton
+                    label="Editar"
+                    secondary
+                    style={style}
+                    onClick={() => this.handleOpenUpdate(index)}
+                  />
                 </TableRowColumn>
               </TableRow>
             ))
